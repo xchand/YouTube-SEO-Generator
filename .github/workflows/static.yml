@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator SEO YouTube dengan Gemini AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .copy-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .copy-button:hover {
+            transform: scale(1.05);
+        }
+        .copy-button:active {
+            transform: scale(0.95);
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .feature-section {
+            border-top: 1px solid #4a5568; /* slate-600 */
+            padding-top: 1.5rem; /* pt-6 */
+            margin-top: 2rem; /* mt-8 */
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-800 text-white min-h-screen flex flex-col items-center justify-center p-4 py-8">
+
+    <div class="bg-slate-800 p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-2xl">
+        <header class="text-center mb-6 sm:mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-sky-400">Generator SEO YouTube Pro</h1>
+            <p class="text-slate-400 mt-2">Optimalkan video Anda dengan judul, deskripsi, tagar, tag, variasi judul, dan optimasi deskripsi yang dibuat oleh AI.</p>
+        </header>
+
+        <div class="space-y-6">
+            <div>
+                <label for="videoTopic" class="block text-sm font-medium text-slate-300 mb-1">Topik Video / Kata Kunci Utama:</label>
+                <input type="text" id="videoTopic" class="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none placeholder-slate-500" placeholder="Contoh: Tutorial memasak nasi goreng spesial">
+            </div>
+
+            <div>
+                <label for="videoType" class="block text-sm font-medium text-slate-300 mb-1">Jenis Video (untuk Judul, Deskripsi, Tagar, Tag awal):</label>
+                <select id="videoType" class="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none">
+                    <option value="long">Video Panjang (Regular)</option>
+                    <option value="shorts">Video Shorts</option>
+                </select>
+            </div>
+
+            <button id="generateSeoButton" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                </svg>
+                Buat Judul, Deskripsi, Tagar & Tag Awal
+            </button>
+
+            <div id="loadingIndicator" class="hidden loader"></div>
+            <div id="errorMessage" class="hidden text-red-400 text-sm text-center p-3 bg-red-900/30 rounded-lg"></div>
+        </div>
+
+        <div id="initialResultsArea" class="mt-8 space-y-6 hidden">
+            <h2 class="text-xl font-semibold text-sky-400 mb-4">Hasil SEO Awal:</h2>
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <h3 class="text-lg font-semibold text-sky-300">Judul:</h3>
+                    <button onclick="copyToClipboard('generatedTitle')" class="copy-button p-1.5 bg-slate-700 hover:bg-slate-600 rounded-md" title="Salin Judul"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-slate-400"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg></button>
+                </div>
+                <p id="generatedTitle" class="p-3 bg-slate-700/50 border border-slate-600 rounded-lg text-slate-300 whitespace-pre-wrap"></p>
+            </div>
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <h3 class="text-lg font-semibold text-sky-300">Deskripsi:</h3>
+                    <button onclick="copyToClipboard('generatedDescription')" class="copy-button p-1.5 bg-slate-700 hover:bg-slate-600 rounded-md" title="Salin Deskripsi"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-slate-400"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg></button>
+                </div>
+                <p id="generatedDescription" class="p-3 bg-slate-700/50 border border-slate-600 rounded-lg text-slate-300 whitespace-pre-wrap h-40 overflow-y-auto"></p>
+            </div>
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <h3 class="text-lg font-semibold text-sky-300">Tagar (Hashtags):</h3>
+                     <button onclick="copyToClipboard('generatedHashtags')" class="copy-button p-1.5 bg-slate-700 hover:bg-slate-600 rounded-md" title="Salin Tagar"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-slate-400"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg></button>
+                </div>
+                <p id="generatedHashtags" class="p-3 bg-slate-700/50 border border-slate-600 rounded-lg text-slate-300 whitespace-pre-wrap"></p>
+            </div>
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <h3 class="text-lg font-semibold text-sky-300">Tag (Keywords):</h3>
+                    <button onclick="copyToClipboard('generatedTags')" class="copy-button p-1.5 bg-slate-700 hover:bg-slate-600 rounded-md" title="Salin Tag"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-slate-400"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg></button>
+                </div>
+                <p id="generatedTags" class="p-3 bg-slate-700/50 border border-slate-600 rounded-lg text-slate-300 whitespace-pre-wrap"></p>
+            </div>
+        </div>
+
+        <div class="feature-section">
+            <h2 class="text-xl font-semibold text-sky-400 mb-4">✨ Variasi Judul</h2>
+            <p class="text-slate-400 mb-4 text-sm">Dapatkan beberapa alternatif judul berdasarkan topik video Anda.</p>
+            <button id="generateTitleVariationsButton" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                Dapatkan Variasi Judul
+            </button>
+            <div id="loadingTitleVariations" class="hidden loader"></div>
+            <div id="errorTitleVariations" class="hidden text-red-400 text-sm text-center p-3 bg-red-900/30 rounded-lg"></div>
+            <div id="titleVariationsResult" class="hidden space-y-2">
+                </div>
+        </div>
+
+        <div class="feature-section">
+            <h2 class="text-xl font-semibold text-sky-400 mb-4">✨ Optimasi Deskripsi</h2>
+            <p class="text-slate-400 mb-4 text-sm">Masukkan draf deskripsi Anda untuk mendapatkan versi yang lebih optimal dari AI.</p>
+            <div>
+                <label for="existingDescription" class="block text-sm font-medium text-slate-300 mb-1">Draf Deskripsi Anda:</label>
+                <textarea id="existingDescription" rows="5" class="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none placeholder-slate-500" placeholder="Tempelkan draf deskripsi video Anda di sini..."></textarea>
+            </div>
+            <button id="optimizeDescriptionButton" class="w-full mt-4 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                Optimalkan Deskripsi Saya
+            </button>
+            <div id="loadingOptimizedDescription" class="hidden loader"></div>
+            <div id="errorOptimizedDescription" class="hidden text-red-400 text-sm text-center p-3 bg-red-900/30 rounded-lg"></div>
+            <div id="optimizedDescriptionResult" class="hidden mt-4">
+                 <div class="flex justify-between items-center mb-1">
+                    <h3 class="text-lg font-semibold text-sky-300">Deskripsi yang Dioptimalkan:</h3>
+                    <button onclick="copyToClipboard('finalOptimizedDescription')" class="copy-button p-1.5 bg-slate-700 hover:bg-slate-600 rounded-md" title="Salin Deskripsi Optimal"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-slate-400"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg></button>
+                </div>
+                <p id="finalOptimizedDescription" class="p-3 bg-slate-700/50 border border-slate-600 rounded-lg text-slate-300 whitespace-pre-wrap h-40 overflow-y-auto"></p>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="toastNotification" class="toast">Teks berhasil disalin!</div>
+
+    <footer class="text-center text-slate-500 mt-10 pb-6">
+        Dibuat dengan <span class="text-red-500">&hearts;</span> dan Gemini AI
+    </footer>
+
+    <script type='text/javascript'>
+    //<![CDATA[
+        const videoTopicInput = document.getElementById('videoTopic');
+        const videoTypeSelect = document.getElementById('videoType');
+        const generateSeoButton = document.getElementById('generateSeoButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorMessageDiv = document.getElementById('errorMessage');
+        const initialResultsArea = document.getElementById('initialResultsArea');
+
+        const generatedTitleP = document.getElementById('generatedTitle');
+        const generatedDescriptionP = document.getElementById('generatedDescription');
+        const generatedHashtagsP = document.getElementById('generatedHashtags');
+        const generatedTagsP = document.getElementById('generatedTags');
+        const toastNotification = document.getElementById('toastNotification');
+
+        // Elemen untuk Variasi Judul
+        const generateTitleVariationsButton = document.getElementById('generateTitleVariationsButton');
+        const loadingTitleVariations = document.getElementById('loadingTitleVariations');
+        const errorTitleVariations = document.getElementById('errorTitleVariations');
+        const titleVariationsResult = document.getElementById('titleVariationsResult');
+
+        // Elemen untuk Optimasi Deskripsi
+        const existingDescriptionTextarea = document.getElementById('existingDescription');
+        const optimizeDescriptionButton = document.getElementById('optimizeDescriptionButton');
+        const loadingOptimizedDescription = document.getElementById('loadingOptimizedDescription');
+        const errorOptimizedDescription = document.getElementById('errorOptimizedDescription');
+        const optimizedDescriptionResult = document.getElementById('optimizedDescriptionResult');
+        const finalOptimizedDescriptionP = document.getElementById('finalOptimizedDescription');
+
+
+        function showToast(message) {
+            toastNotification.textContent = message;
+            toastNotification.classList.add('show');
+            setTimeout(() => {
+                toastNotification.classList.remove('show');
+            }, 2000);
+        }
+
+        function copyToClipboard(elementId) {
+            const textToCopy = document.getElementById(elementId).innerText;
+            const textArea = document.createElement('textarea');
+            textArea.value = textToCopy;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Teks berhasil disalin!');
+            } catch (err) {
+                console.error('Gagal menyalin teks: ', err);
+                showToast('Gagal menyalin. Coba lagi.');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        async function callGeminiAPI(prompt, schema, loadingElement, errorElement, buttonElement, resultHandler) {
+            const topic = videoTopicInput.value.trim(); // Diambil untuk konteks umum jika diperlukan
+            
+            loadingElement.classList.remove('hidden');
+            errorElement.classList.add('hidden');
+            if (buttonElement) {
+                buttonElement.disabled = true;
+                buttonElement.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            try {
+                const apiKey = ""; // Biarkan kosong, Canvas akan menyediakannya atau ganti dengan API Key Anda
+                if (apiKey === "MASUKKAN_API_KEY_ANDA_DI_SINI" || apiKey === "") {
+                     console.warn("API Key belum diatur. Panggilan ke Gemini API mungkin gagal jika tidak di lingkungan Canvas.");
+                }
+
+                let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const payload = {
+                    contents: chatHistory,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: schema
+                    }
+                };
+                
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("API Error Data:", errorData);
+                    let errorMessageText = `Gagal mengambil data dari API: ${response.statusText}.`;
+                    if (errorData && errorData.error && errorData.error.message) {
+                        errorMessageText += ` Detail: ${errorData.error.message}`;
+                        if (errorData.error.message.includes("API key not valid")) {
+                             errorMessageText += " Pastikan Anda telah memasukkan API Key yang benar.";
+                        }
+                    } else {
+                        errorMessageText += " Tidak ada detail tambahan dari API.";
+                    }
+                    throw new Error(errorMessageText);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    
+                    const textOutput = result.candidates[0].content.parts[0].text;
+                    const jsonData = JSON.parse(textOutput);
+                    resultHandler(jsonData);
+                } else {
+                    console.error("Struktur respons tidak sesuai:", result);
+                     let noResultError = 'Gagal memproses respons dari AI. Struktur data tidak dikenali atau respons kosong.';
+                    if (result.promptFeedback && result.promptFeedback.blockReason) {
+                         noResultError = `Permintaan diblokir oleh AI. Alasan: ${result.promptFeedback.blockReason}. Detail: ${result.promptFeedback.blockReasonMessage || JSON.stringify(result.promptFeedback.safetyRatings)}`;
+                    }
+                    throw new Error(noResultError);
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                errorElement.textContent = `Terjadi kesalahan: ${error.message}`;
+                errorElement.classList.remove('hidden');
+            } finally {
+                loadingElement.classList.add('hidden');
+                 if (buttonElement) {
+                    buttonElement.disabled = false;
+                    buttonElement.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        // Fungsi untuk SEO Awal
+        generateSeoButton.addEventListener('click', async () => {
+            const topic = videoTopicInput.value.trim();
+            const type = videoTypeSelect.value;
+
+            if (!topic) {
+                errorMessageDiv.textContent = 'Harap masukkan topik video atau kata kunci.';
+                errorMessageDiv.classList.remove('hidden');
+                initialResultsArea.classList.add('hidden');
+                return;
+            }
+            initialResultsArea.classList.add('hidden'); // Sembunyikan hasil lama
+
+            let prompt;
+            if (type === 'long') {
+                prompt = `Buatkan saya judul video YouTube yang menarik, deskripsi video yang detail dan SEO-friendly (sekitar 100-200 kata), 5-7 hashtag relevan, dan 10-15 tag/kata kunci yang relevan untuk video YouTube panjang dengan topik: "${topic}". Deskripsi harus menyertakan kata kunci utama secara alami dan mengajak penonton untuk berinteraksi. Hashtag harus campuran antara umum dan spesifik. Tag harus mencakup variasi kata kunci dan sinonim. Format output harus JSON dengan kunci: "title", "description", "hashtags" (array string), dan "tags" (array string).`;
+            } else { // shorts
+                prompt = `Buatkan saya judul video YouTube Shorts yang sangat singkat dan menarik perhatian (maksimal 70 karakter), deskripsi video yang sangat singkat (1-2 kalimat, bisa ajakan subscribe atau cek video lain), 3-5 hashtag viral dan relevan, dan 5-8 tag/kata kunci singkat yang relevan untuk video YouTube Shorts dengan topik: "${topic}". Format output harus JSON dengan kunci: "title", "description", "hashtags" (array string), dan "tags" (array string).`;
+            }
+            
+            const schema = {
+                type: "OBJECT",
+                properties: {
+                    "title": { "type": "STRING" },
+                    "description": { "type": "STRING" },
+                    "hashtags": { "type": "ARRAY", "items": { "type": "STRING" } },
+                    "tags": { "type": "ARRAY", "items": { "type": "STRING" } }
+                },
+                required: ["title", "description", "hashtags", "tags"]
+            };
+
+            await callGeminiAPI(prompt, schema, loadingIndicator, errorMessageDiv, generateSeoButton, (seoData) => {
+                generatedTitleP.textContent = seoData.title || "Tidak ada judul yang dihasilkan.";
+                generatedDescriptionP.textContent = seoData.description || "Tidak ada deskripsi yang dihasilkan.";
+                generatedHashtagsP.textContent = seoData.hashtags ? seoData.hashtags.map(h => `#${h.replace(/#/g, '')}`).join(' ') : "Tidak ada tagar yang dihasilkan.";
+                generatedTagsP.textContent = seoData.tags ? seoData.tags.join(', ') : "Tidak ada tag yang dihasilkan.";
+                initialResultsArea.classList.remove('hidden');
+            });
+        });
+
+        // Fungsi untuk Variasi Judul
+        generateTitleVariationsButton.addEventListener('click', async () => {
+            const topic = videoTopicInput.value.trim();
+            if (!topic) {
+                errorTitleVariations.textContent = 'Harap masukkan topik video terlebih dahulu di kolom utama.';
+                errorTitleVariations.classList.remove('hidden');
+                titleVariationsResult.innerHTML = ''; // Kosongkan hasil sebelumnya
+                titleVariationsResult.classList.add('hidden');
+                return;
+            }
+            titleVariationsResult.innerHTML = ''; // Kosongkan hasil sebelumnya
+            titleVariationsResult.classList.add('hidden');
+
+
+            const prompt = `Berdasarkan topik video "${topic}", berikan saya 5 alternatif judul video YouTube yang menarik dan SEO-friendly. Variasikan gaya judulnya, misalnya satu judul clickbait, satu judul berbentuk pertanyaan, satu judul informatif, satu judul dengan angka, dan satu judul yang menyoroti manfaat. Format output harus JSON dengan kunci "title_variations" yang berisi array string dari judul-judul tersebut.`;
+            const schema = {
+                type: "OBJECT",
+                properties: { "title_variations": { "type": "ARRAY", "items": { "type": "STRING" } } },
+                required: ["title_variations"]
+            };
+
+            await callGeminiAPI(prompt, schema, loadingTitleVariations, errorTitleVariations, generateTitleVariationsButton, (data) => {
+                if (data.title_variations && data.title_variations.length > 0) {
+                    titleVariationsResult.innerHTML = ''; // Kosongkan sebelum mengisi
+                    data.title_variations.forEach((title, index) => {
+                        const p = document.createElement('p');
+                        p.id = `titleVariation${index}`;
+                        p.className = 'p-3 bg-slate-700/50 border border-slate-600 rounded-lg text-slate-300 whitespace-pre-wrap flex justify-between items-center';
+                        
+                        const titleText = document.createElement('span');
+                        titleText.textContent = title;
+
+                        const copyBtn = document.createElement('button');
+                        copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-slate-400"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg>`;
+                        copyBtn.className = 'copy-button p-1.5 bg-slate-600 hover:bg-slate-500 rounded-md ml-2';
+                        copyBtn.title = 'Salin Variasi Judul';
+                        copyBtn.onclick = () => {
+                            // Buat elemen sementara untuk menyalin teks dari span, bukan dari p.id
+                            const tempTextArea = document.createElement('textarea');
+                            tempTextArea.value = title; // Salin teks judul langsung
+                            document.body.appendChild(tempTextArea);
+                            tempTextArea.select();
+                            try {
+                                document.execCommand('copy');
+                                showToast('Variasi judul disalin!');
+                            } catch (err) {
+                                console.error('Gagal menyalin teks: ', err);
+                                showToast('Gagal menyalin. Coba lagi.');
+                            }
+                            document.body.removeChild(tempTextArea);
+                        };
+                        
+                        p.appendChild(titleText);
+                        p.appendChild(copyBtn);
+                        titleVariationsResult.appendChild(p);
+                    });
+                    titleVariationsResult.classList.remove('hidden');
+                } else {
+                    errorTitleVariations.textContent = "Tidak ada variasi judul yang dihasilkan.";
+                    errorTitleVariations.classList.remove('hidden');
+                }
+            });
+        });
+
+        // Fungsi untuk Optimasi Deskripsi
+        optimizeDescriptionButton.addEventListener('click', async () => {
+            const topic = videoTopicInput.value.trim();
+            const existingDescription = existingDescriptionTextarea.value.trim();
+
+            if (!topic) {
+                errorOptimizedDescription.textContent = 'Harap masukkan topik video terlebih dahulu di kolom utama sebagai konteks.';
+                errorOptimizedDescription.classList.remove('hidden');
+                optimizedDescriptionResult.classList.add('hidden');
+                return;
+            }
+            if (!existingDescription) {
+                errorOptimizedDescription.textContent = 'Harap masukkan draf deskripsi Anda.';
+                errorOptimizedDescription.classList.remove('hidden');
+                optimizedDescriptionResult.classList.add('hidden');
+                return;
+            }
+            optimizedDescriptionResult.classList.add('hidden');
+
+
+            const prompt = `Saya punya deskripsi video YouTube berikut: "${existingDescription}". Topik utama video adalah "${topic}". Tolong optimalkan deskripsi ini agar lebih SEO-friendly dan menarik bagi penonton. Fokus pada penambahan kata kunci yang relevan dengan topik "${topic}" secara alami, perbaikan struktur kalimat agar lebih mudah dibaca, dan pastikan ada ajakan bertindak (call to action) yang jelas. Panjang deskripsi yang dioptimalkan sebaiknya sekitar 100-250 kata. Format output harus JSON dengan kunci "optimized_description" yang berisi string deskripsi yang telah dioptimalkan.`;
+            const schema = {
+                type: "OBJECT",
+                properties: { "optimized_description": { "type": "STRING" } },
+                required: ["optimized_description"]
+            };
+
+            await callGeminiAPI(prompt, schema, loadingOptimizedDescription, errorOptimizedDescription, optimizeDescriptionButton, (data) => {
+                if (data.optimized_description) {
+                    finalOptimizedDescriptionP.textContent = data.optimized_description;
+                    optimizedDescriptionResult.classList.remove('hidden');
+                } else {
+                    errorOptimizedDescription.textContent = "Tidak ada deskripsi optimal yang dihasilkan.";
+                    errorOptimizedDescription.classList.remove('hidden');
+                }
+            });
+        });
+
+    //]]>
+    </script>
+</body>
+</html>
